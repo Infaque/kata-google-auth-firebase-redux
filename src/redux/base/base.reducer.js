@@ -1,6 +1,7 @@
 const INITIAL_STATE = {
     currentMesage: 'Hello, this is my initial message!',
-    lastMessage: ''
+    lastMessage: '',
+    user: null,
 }
 
 const baseReducer = (state = INITIAL_STATE, action) => {
@@ -12,7 +13,11 @@ const baseReducer = (state = INITIAL_STATE, action) => {
 
             }
 
-            
+        case 'CHANGE_USER':
+            return {
+                ...state,
+                user: action.payload
+            }
         default:
             return state;
     }

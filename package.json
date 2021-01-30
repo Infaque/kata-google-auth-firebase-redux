@@ -14,7 +14,9 @@
     "react-scripts": "4.0.1",
     "redux": "^4.0.5",
     "redux-logger": "^3.0.6",
-    "web-vitals": "^0.2.4"
+    "web-vitals": "^0.2.4",
+    "firebase": "^8.0.0",
+    "firebase-tools": "^8.14.1"
   },
   "scripts": {
     "start": "react-scripts start",
