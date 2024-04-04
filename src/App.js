@@ -1,101 +1,80 @@
-import './App.css';
-import React from 'react';
-import { connect } from 'react-redux'; 
-import {updateMessage ,changeUser} from './redux/base/base.actions';
-import { auth  , signInWithGoogle } from './firebase/firebase.utils';
-
-class App extends React.Component {
-
-  unsubscribeFromAuth = null;
-     
-  componentDidMount(){
-         this.unsubscribeFromAuth = auth.onAuthStateChanged(async userAuth => {
-              if (userAuth) {
-                var user_jwt;
-                await auth.currentUser.getIdToken(true).then(user=>{
-                  user_jwt = user;
-                  
-                });
-                
-                
-                this.props.changeUser({
-                  email: userAuth.email,
-                  displayName: userAuth.displayName,
-                  token: user_jwt,
-                  uid: userAuth.uid
-                });
-              }
-              else {
-                this.props.changeUser(null);
-                console.log('no one is logged in');
-              }
-              
-              
-  });
-  }
-
-  constructor(props) {
-    super(props);
-    this.state = {
-        messageToAdd: ''
-    }
-}
-
-mySubmitHandler = (event) => {
-    event.preventDefault();
-    //alert("You are submitting " + this.state.numToAdd);
-    this.props.updateMessage(this.state.messageToAdd);
-    this.setState({messageToAdd: ''});
-    
-    
-}
-
-myChangeHandler = (event) => {
-    this.setState({messageToAdd: event.target.value});
-}
 
 
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { updateMessage, changeUser, setSignedIntatus, setLoadingStatus } from './redux/base/base.actions';
+import MainApp from './MainApp';
+import Login from './Login';
+import { auth, signInWithSAMLRedirectResult } from './firebase/firebase.utils';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useParams
+} from "react-router-dom";
+
+function App() {
+  const dispatch = useDispatch();
+  let params = useParams();
 
 
-  render(){
+  useEffect(() => {
+
+
+    signInWithSAMLRedirectResult().then((r) => {
+      console.log('Redirect from saml login. Result:', r);
+
+    });
+
+  }, []);
+
+  useEffect(() => {
+
+    console.log('Params:', params);
+    const unsubscribeFromAuth = auth.onAuthStateChanged(async userAuth => {
+      if (userAuth) {
+        console.log('User is logged in:', userAuth.displayName);
+
+        const userInfo = {
+          email: userAuth.email,
+          displayName: userAuth.displayName,
+          uid: userAuth.uid
+        }
+
+        dispatch(changeUser(userInfo));
+        dispatch(setSignedIntatus(true));
+        dispatch(setLoadingStatus(false));
+
+
+      }
+      else {
+        dispatch(changeUser(null));
+        dispatch(setSignedIntatus(false));
+        console.log('no one is logged in');
+        dispatch(setLoadingStatus(false));
+      }
+
+
+    });
+
+
+  }, []);
   return (
-    <div className="App">
-      <h1>Hello! {this.props.user? this.props.user.displayName + ' You are Logged In':'You Are not logged in'}</h1>
-      <h3>Message:{this.props.msgToDisplay}</h3>
-      <h3>Last Message:{this.props.lastMessage}</h3>
-      <form onSubmit={this.mySubmitHandler}>
-        <label>
-          Name:
-          <input type="text" name="name" value={this.state.messageToAdd} onChange={this.myChangeHandler} placeholder="text"/>
-        </label>
-        <input type="submit" value="Submit" />
-      </form>
-
-      <button onClick={signInWithGoogle}>Sign In with Google</button>
-      <button onClick={() => auth.signOut()}>Sign Out</button>
+    <div>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<MainApp />} />
+          <Route path="hello" element={<h1>Hello World</h1>} />
+          <Route path="login" element={<Login />} />
+          <Route path="signedin" element={<h1>Signed In</h1>} />
+          <Route path="redirectsaml" element={<h1>Redirecting to SAML Provider</h1>} />
 
 
+
+        </Routes>
+      </BrowserRouter>
     </div>
-  );
-}
-}
-
-const mapDispatchToProps = dispatch => {
-  return {
-    // dispatching plain actions
-    updateMessage: new_message => dispatch(updateMessage(new_message)),
-    changeUser: (user) => dispatch(changeUser(user))
-  }
+  )
 }
 
-
-const mapStateToProps = state => ({
-  msgToDisplay: state.base.currentMesage,
-  lastMessage: state.base.lastMessage,
-  user: state.base.user
-  
-});
-
-export default connect(mapStateToProps,mapDispatchToProps)(App);
-
-
+export default App
